@@ -13,12 +13,8 @@ FROM tblBUILDING B JOIN tblBUILDING_TYPE BT
 ON B.BuildingTypeID = BT.BuildingTypeID
 WHERE BuildingTypeName = 'Library'
 
-
-SELECT * FROM tblQUARTER
-
 -- 4
 SELECT DISTINCT TOP 10 S.StudentFname, S.StudentLname, S.StudentBirth
-  -- , Q.QuarterName, C.YEAR, Clg.CollegeName
 FROM tblCLASS_LIST CL JOIN tblSTUDENT S
 ON CL.StudentID = S.StudentID
   JOIN tblCLASS C
@@ -37,7 +33,6 @@ WHERE Q.QuarterName = 'Winter'
 ORDER BY S.StudentBirth DESC
 
 -- 5
--- SELECT * FROM tblLOCATION
 SELECT TOP 5 B.BuildingName, B.YearOpened
 FROM tblBUILDING B JOIN tblLOCATION L
 ON B.LocationID = L.LocationID
@@ -57,7 +52,6 @@ ORDER BY COUNT(C.YEAR) DESC
 
 -- 7
 SELECT TOP 1 D.DeptName, COUNT(PT.PositionTypeName) Executives
--- SP.BeginDate, S.StaffFName, S.StaffLName
 FROM tblSTAFF_POSITION SP JOIN tblPOSITION P
 ON SP.PositionID = P.PositionID
   JOIN tblPOSITION_TYPE PT
@@ -71,11 +65,6 @@ WHERE SP.BeginDate > '1968-06-08'
   AND PT.PositionTypeName = 'Executive'
 GROUP BY D.DeptName
 ORDER BY COUNT(PT.PositionTypeName) DESC
-
-SELECT PositionTypeDescr, PositionTypeName FROM tblPOSITION_TYPE
-SELECT PositionName FROM tblPOSITION ORDER BY PositionName
-SELECT * FROM tblINSTRUCTOR_TYPE
-SELECT TOP 25 * FROM tblINSTRUCTOR_INSTRUCTOR_TYPE
 
 -- 8
 SELECT TOP 1 I.InstructorFName, I.InstructorLName, IIT.BeginDate, IIT.EndDate
