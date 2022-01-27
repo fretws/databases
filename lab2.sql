@@ -1,11 +1,46 @@
 -- 1
-SELECT studentFname, studentLname FROM tblSTUDENT
-WHERE StudentBirth > '1996-11-05'
+SELECT StudentFname + ' ' + StudentLname AS [Student Name], StudentID
+FROM tblSTUDENT
+WHERE StudentID IN (
+  SELECT S.StudentID
+  FROM tblCLASS_LIST CL
+    JOIN tblSTUDENT S ON CL.StudentID = S.StudentID
+    JOIN tblCLASS C ON CL.ClassID = C.ClassID
+    JOIN tblCOURSE Co ON C.CourseID = Co.CourseID
+    JOIN tblDEPARTMENT D ON Co.DeptID = D.DeptID
+    JOIN tblCOLLEGE Clg ON D.CollegeID = Clg.CollegeID
+  WHERE Clg.CollegeName = 'Information School'
+    AND C.[YEAR] > 2010
+  GROUP BY S.StudentID
+  HAVING SUM(CL.RegistrationFee) > 3000
+) AND StudentID IN (
+  SELECT S.StudentID
+  FROM tblCLASS_LIST CL
+    JOIN tblSTUDENT S ON CL.StudentID = S.StudentID
+    JOIN tblCLASS C ON CL.ClassID = C.ClassID
+    JOIN tblCOURSE Co ON C.CourseID = Co.CourseID
+    JOIN tblDEPARTMENT D ON Co.DeptID = D.DeptID
+    JOIN tblCOLLEGE Clg ON D.CollegeID = Clg.CollegeID
+  WHERE Clg.CollegeName = 'Public Health'
+    AND C.[YEAR] < 2016
+  GROUP BY S.StudentID
+  HAVING SUM(Co.Credits) > 12
+)
 
 -- 2
-SELECT B.BuildingName FROM tblBUILDING B JOIN tblLOCATION L
-ON B.LocationID = L.LocationID
-WHERE LocationName = 'West Campus'
+SELECT TOP 3 WITH TIES D.DeptName, COUNT(DISTINCT S.StudentID) AS [Number of Students]
+FROM tblSTUDENT S
+  JOIN tblCLASS_LIST CL ON S.StudentID = CL.StudentID
+  JOIN tblCLASS C ON C.ClassID = CL.ClassID
+  JOIN tblCOURSE Co ON Co.CourseID = C.CourseID
+  JOIN tblDEPARTMENT D ON D.DeptID = Co.DeptID
+  JOIN tblCOLLEGE Clg ON Clg.CollegeID = D.CollegeID
+WHERE C.[YEAR] BETWEEN 2004 AND 2013
+  AND CL.Grade < 3.4
+  AND Clg.CollegeName = 'Arts and Sciences'
+GROUP BY D.DeptName
+ORDER BY [Number of Students] DESC
+
 
 -- 3
 SELECT COUNT(B.BuildingID)
