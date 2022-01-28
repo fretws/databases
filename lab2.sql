@@ -1,115 +1,126 @@
 -- 1
-SELECT StudentFname + ' ' + StudentLname AS [Student Name], StudentID
-FROM tblSTUDENT
-WHERE StudentID IN (
-  SELECT S.StudentID
-  FROM tblCLASS_LIST CL
-    JOIN tblSTUDENT S ON CL.StudentID = S.StudentID
-    JOIN tblCLASS C ON CL.ClassID = C.ClassID
-    JOIN tblCOURSE Co ON C.CourseID = Co.CourseID
-    JOIN tblDEPARTMENT D ON Co.DeptID = D.DeptID
-    JOIN tblCOLLEGE Clg ON D.CollegeID = Clg.CollegeID
-  WHERE Clg.CollegeName = 'Information School'
-    AND C.[YEAR] > 2010
-  GROUP BY S.StudentID
-  HAVING SUM(CL.RegistrationFee) > 3000
-) AND StudentID IN (
-  SELECT S.StudentID
-  FROM tblCLASS_LIST CL
-    JOIN tblSTUDENT S ON CL.StudentID = S.StudentID
-    JOIN tblCLASS C ON CL.ClassID = C.ClassID
-    JOIN tblCOURSE Co ON C.CourseID = Co.CourseID
-    JOIN tblDEPARTMENT D ON Co.DeptID = D.DeptID
-    JOIN tblCOLLEGE Clg ON D.CollegeID = Clg.CollegeID
-  WHERE Clg.CollegeName = 'Public Health'
-    AND C.[YEAR] < 2016
-  GROUP BY S.StudentID
-  HAVING SUM(Co.Credits) > 12
+Select StudentFname + ' ' + StudentLname AS [Student Name], StudentID
+From tblSTUDENT
+Where StudentID In (
+  Select S.StudentID
+  From tblCLASS_LIST CL
+    Join tblSTUDENT S On CL.StudentID = S.StudentID
+    Join tblCLASS C On CL.ClassID = C.ClassID
+    Join tblCOURSE Co On C.CourseID = Co.CourseID
+    Join tblDEPARTMENT D On Co.DeptID = D.DeptID
+    Join tblCOLLEGE Clg On D.CollegeID = Clg.CollegeID
+  Where Clg.CollegeName = 'Information School'
+    And C.[YEAR] > 2010
+  Group By S.StudentID
+  Having SUM(CL.RegistratiOnFee) > 3000
+) And StudentID In (
+  Select S.StudentID
+  From tblCLASS_LIST CL
+    Join tblSTUDENT S On CL.StudentID = S.StudentID
+    Join tblCLASS C On CL.ClassID = C.ClassID
+    Join tblCOURSE Co On C.CourseID = Co.CourseID
+    Join tblDEPARTMENT D On Co.DeptID = D.DeptID
+    Join tblCOLLEGE Clg On D.CollegeID = Clg.CollegeID
+  Where Clg.CollegeName = 'Public Health'
+    And C.[YEAR] < 2016
+  Group By S.StudentID
+  Having SUM(Co.Credits) > 12
 )
 
 -- 2
-SELECT TOP 3 WITH TIES D.DeptName, COUNT(DISTINCT S.StudentID) AS [Number of Students]
-FROM tblSTUDENT S
-  JOIN tblCLASS_LIST CL ON S.StudentID = CL.StudentID
-  JOIN tblCLASS C ON C.ClassID = CL.ClassID
-  JOIN tblCOURSE Co ON Co.CourseID = C.CourseID
-  JOIN tblDEPARTMENT D ON D.DeptID = Co.DeptID
-  JOIN tblCOLLEGE Clg ON Clg.CollegeID = D.CollegeID
-WHERE C.[YEAR] BETWEEN 2004 AND 2013
-  AND CL.Grade < 3.4
-  AND Clg.CollegeName = 'Arts and Sciences'
-GROUP BY D.DeptName
-ORDER BY [Number of Students] DESC
+Select Top 3 With Ties D.DeptName, COUNT(DISTINCT S.StudentID) AS [Number of Students]
+From tblSTUDENT S
+  Join tblCLASS_LIST CL On S.StudentID = CL.StudentID
+  Join tblCLASS C On C.ClassID = CL.ClassID
+  Join tblCOURSE Co On Co.CourseID = C.CourseID
+  Join tblDEPARTMENT D On D.DeptID = Co.DeptID
+  Join tblCOLLEGE Clg On Clg.CollegeID = D.CollegeID
+Where C.[YEAR] BETWEEN 2004 And 2013
+  And CL.Grade < 3.4
+  And Clg.CollegeName = 'Arts and Sciences'
+Group By D.DeptName
+Order By [Number of Students] Desc
 
 
 -- 3
-SELECT COUNT(B.BuildingID)
-FROM tblBUILDING B JOIN tblBUILDING_TYPE BT
-ON B.BuildingTypeID = BT.BuildingTypeID
-WHERE BuildingTypeName = 'Library'
+Select Co.CourseName, I.InstructorFName + ' ' + I.InstructorLName As Instructor, L.LocationName As [Location]
+From tblLOCATION L
+  Join tblBUILDING B On L.LocationID = B.LocationID
+  Join tblCLASSROOM Cr On B.BuildingID = Cr.BuildingID
+  Join tblCLASS Cl On Cr.ClassroomID = Cl.ClassroomID
+  Join tblINSTRUCTOR_CLASS IC On Cl.ClassID = IC.ClassID
+  Join tblINSTRUCTOR I On IC.InstructorID = I.InstructorID
+  Join tblCOURSE Co On Cl.CourseID = Co.CourseID
+  Join tblDEPARTMENT D On Co.DeptID = D.DeptID
+  Join tblQUARTER Q On Cl.QuarterID = Q.QuarterID
+Where L.LocationID = 7
+  And I.InstructorFName + ' ' + I.InstructorLName = 'Greg Hay'
+  And D.DeptID = 19
+  And Cl.[YEAR] < 2015
+  And Q.QuarterName = 'Winter'
 
 -- 4
-SELECT DISTINCT TOP 10 S.StudentFname, S.StudentLname, S.StudentBirth
-FROM tblCLASS_LIST CL JOIN tblSTUDENT S
-ON CL.StudentID = S.StudentID
-  JOIN tblCLASS C
-ON CL.ClassID = C.ClassID
-  JOIN tblQUARTER Q
-ON C.QuarterID = Q.QuarterID
-  JOIN tblCOURSE Co
-ON C.CourseID = Co.CourseID
-  JOIN tblDEPARTMENT D
-ON Co.DeptID = D.DeptID
-  JOIN tblCOLLEGE Clg
-ON D.CollegeID = Clg.CollegeID
-WHERE Q.QuarterName = 'Winter'
-  AND C.YEAR = 2009
-  AND Clg.CollegeName = 'Information School'
-ORDER BY S.StudentBirth DESC
+Select S.StaffFName + ' ' + S.StaffLName As [Staff Member], SP.BeginDate, Clg.CollegeName
+From tblSTAFF S
+  Join tblSTAFF_POSITION SP On S.StaffID = SP.StaffID
+  Join tblDEPARTMENT D On D.DeptID = SP.DeptID
+  Join tblCOLLEGE Clg On Clg.CollegeID = D.CollegeID
+  Join (
+    Select Clg.CollegeID, Min(SP.BeginDate) As [Begin Date]
+    From tblSTAFF S
+      Join tblSTAFF_POSITION SP On S.StaffID = SP.StaffID
+      Join tblDEPARTMENT D On D.DeptID = SP.DeptID
+      Join tblCOLLEGE Clg On Clg.CollegeID = D.CollegeID
+    Where SP.EndDate Is Null
+    Group By Clg.CollegeID
+  ) As MinStartDates On SP.BeginDate = MinStartDates.[Begin Date]
+    AND Clg.CollegeID = MinStartDates.CollegeID
+Where SP.EndDate Is Null
+Order By SP.BeginDate
 
 -- 5
-SELECT TOP 5 B.BuildingName, B.YearOpened
-FROM tblBUILDING B JOIN tblLOCATION L
-ON B.LocationID = L.LocationID
--- Do not include buildings that are on Satellite Campuses
-WHERE L.LocationDescr NOT LIKE '%Satelitte%'
-ORDER BY YearOpened
+Select Top 5 B.BuildingName, B.YearOpened
+From tblBUILDING B Join tblLOCATION L
+On B.LocationID = L.LocationID
+-- Do not include buildings that are On Satellite Campuses
+Where L.LocationDescr NOT LIKE '%Satelitte%'
+ORDER By YearOpened
 
 -- 6
-SELECT TOP 5 S.StudentPermState, COUNT(C.YEAR) Instances
-FROM tblSTUDENT S JOIN tblCLASS_LIST CL
-ON S.StudentID = CL.StudentID
-  JOIN tblCLASS C
-ON C.ClassID = CL.ClassID
-WHERE C.YEAR = 1930
-GROUP BY S.StudentPermState
-ORDER BY COUNT(C.YEAR) DESC
+Select Top 5 S.StudentPermState, COUNT(C.YEAR) Instances
+From tblSTUDENT S Join tblCLASS_LIST CL
+On S.StudentID = CL.StudentID
+  Join tblCLASS C
+On C.ClassID = CL.ClassID
+Where C.YEAR = 1930
+Group By S.StudentPermState
+ORDER By COUNT(C.YEAR) DESC
 
 -- 7
-SELECT TOP 1 D.DeptName, COUNT(PT.PositionTypeName) Executives
-FROM tblSTAFF_POSITION SP JOIN tblPOSITION P
-ON SP.PositionID = P.PositionID
-  JOIN tblPOSITION_TYPE PT
-ON P.PositionTypeID = PT.PositionTypeID
-  JOIN tblDEPARTMENT D
-ON D.DeptID = SP.DeptID
-  JOIN tblSTAFF S
-ON S.StaffID = SP.StaffID
-WHERE SP.BeginDate > '1968-06-08'
-  AND SP.BeginDate < '1989-03-06'
-  AND PT.PositionTypeName = 'Executive'
-GROUP BY D.DeptName
-ORDER BY COUNT(PT.PositionTypeName) DESC
+Select Top 1 D.DeptName, COUNT(PT.PositiOnTypeName) Executives
+From tblSTAFF_POSITIOn SP Join tblPOSITIOn P
+On SP.PositiOnID = P.PositiOnID
+  Join tblPOSITIOn_TYPE PT
+On P.PositiOnTypeID = PT.PositiOnTypeID
+  Join tblDEPARTMENT D
+On D.DeptID = SP.DeptID
+  Join tblSTAFF S
+On S.StaffID = SP.StaffID
+Where SP.BeginDate > '1968-06-08'
+  And SP.BeginDate < '1989-03-06'
+  And PT.PositiOnTypeName = 'Executive'
+Group By D.DeptName
+ORDER By COUNT(PT.PositiOnTypeName) DESC
 
 -- 8
-SELECT TOP 1 I.InstructorFName, I.InstructorLName, IIT.BeginDate, IIT.EndDate
-FROM tblInstructor I JOIN tblINSTRUCTOR_INSTRUCTOR_TYPE IIT
-ON I.InstructorID = IIT.InstructorID
-  JOIN tblINSTRUCTOR_TYPE IT
-ON IT.InstructorTypeID = IIT.InstructorTypeID
-WHERE IT.InstructorTypeName = 'Senior Lecturer'
-  AND IIT.EndDate IS NULL
-ORDER BY IIT.BeginDate
+Select Top 1 I.InstructorFName, I.InstructorLName, IIT.BeginDate, IIT.EndDate
+From tblInstructor I Join tblINSTRUCTOR_INSTRUCTOR_TYPE IIT
+On I.InstructorID = IIT.InstructorID
+  Join tblINSTRUCTOR_TYPE IT
+On IT.InstructorTypeID = IIT.InstructorTypeID
+Where IT.InstructorTypeName = 'Senior Lecturer'
+  And IIT.EndDate IS NULL
+ORDER By IIT.BeginDate
 
 -- 9
 Select Cg.CollegeName, COUNT(Distinct C.CourseID) Courses
