@@ -1,4 +1,5 @@
 -- 1
+
 Select StudentFname + ' ' + StudentLname AS [Student Name], StudentID
 From tblSTUDENT
 Where StudentID In (
@@ -28,6 +29,7 @@ Where StudentID In (
 )
 
 -- 2
+
 Select Top 3 With Ties D.DeptName, COUNT(DISTINCT S.StudentID) AS [Number of Students]
 From tblSTUDENT S
   Join tblCLASS_LIST CL On S.StudentID = CL.StudentID
@@ -43,6 +45,7 @@ Order By [Number of Students] Desc
 
 
 -- 3
+
 Select Co.CourseName, I.InstructorFName + ' ' + I.InstructorLName As Instructor, L.LocationName As [Location]
 From tblLOCATION L
   Join tblBUILDING B On L.LocationID = B.LocationID
@@ -60,6 +63,7 @@ Where L.LocationID = 7
   And Q.QuarterName = 'Winter'
 
 -- 4
+
 Select S.StaffFName + ' ' + S.StaffLName As [Staff Member], SP.BeginDate, Clg.CollegeName
 From tblSTAFF S
   Join tblSTAFF_POSITION SP On S.StaffID = SP.StaffID
@@ -79,76 +83,149 @@ Where SP.EndDate Is Null
 Order By SP.BeginDate
 
 -- 5
-Select Top 5 B.BuildingName, B.YearOpened
-From tblBUILDING B Join tblLOCATION L
-On B.LocationID = L.LocationID
--- Do not include buildings that are On Satellite Campuses
-Where L.LocationDescr NOT LIKE '%Satelitte%'
-ORDER By YearOpened
+
+Select Top 3 With Ties CT.ClassroomTypeName, Count(Distinct Co.CourseID) As [Count]
+From tblCLASSROOM_TYPE CT
+  Join tblClassroom Cr On Cr.ClassroomTypeID = Ct.ClassroomTypeID
+  Join tblClass C On C.ClassroomID = Cr.ClassroomID
+  Join tblCourse Co On C.CourseID = Co.CourseID
+  Join tblDEPARTMENT D On D.DeptID = Co.DeptID
+Where D.DeptAbbrev = 'ANTH'
+  And Co.CourseNumber Like '3%'
+  And C.[YEAR] > 1983
+Group By CT.ClassroomTypeName
+Order By Count(Distinct Co.CourseID)
+
 
 -- 6
-Select Top 5 S.StudentPermState, COUNT(C.YEAR) Instances
-From tblSTUDENT S Join tblCLASS_LIST CL
-On S.StudentID = CL.StudentID
-  Join tblCLASS C
-On C.ClassID = CL.ClassID
-Where C.YEAR = 1930
-Group By S.StudentPermState
-ORDER By COUNT(C.YEAR) DESC
+  -- @StaffFName VARCHAR (60) Not Null,
+  -- @StaffLName VARCHAR (60) Not Null,
+  -- @StaffAddress VARCHAR (120) Not Null,
+  -- @StaffCity VARCHAR (75) Not Null,
+  -- @StaffState VARCHAR (25) Not Null,
+  -- @StaffZip VARCHAR (25) Not Null,
+  -- @StaffBirth DATE Not Null,
+  -- @StaffNetID VARCHAR (20),
+  -- @StaffEmail VARCHAR (80),
+  -- @Gender CHAR (1) Not Null,
+  -- @PositionID INT Not Null,
+  -- @DeptID INT,
+  -- @BeginDate DATETIME
+
+Go
+
+Alter Procedure fretws_INSERT_NewStaffToExistingPosition
+  @StaffFName VARCHAR (60),
+  @StaffLName VARCHAR (60),
+  @StaffAddress VARCHAR (120),
+  @StaffCity VARCHAR (75),
+  @StaffState VARCHAR (25),
+  @StaffZip VARCHAR (25),
+  @StaffBirth DATE,
+  @StaffNetID VARCHAR (20),
+  @StaffEmail VARCHAR (80),
+  @Gender CHAR (1),
+  @PositionID INT,
+  @DeptID INT,
+  @BeginDate DATETIME
+As
+If (
+  Exists (Select PositionID From tblPOSITION)
+  And (
+    @DeptID Is Null -- Not every Staff_Position needs a DeptID
+    Or
+    Exists (
+      Select DeptID From tblDEPARTMENT
+      Where DeptID = @DeptID
+      )
+  )
+)
+Begin
+Begin Transaction
+  Insert Into tblSTAFF (
+    StaffFName, StaffLName, StaffAddress, StaffCity, StaffState, StaffZip, StaffBirth, StaffEmail, Gender
+  )
+  Values
+  (
+    @StaffFName, @StaffLName, @StaffAddress, @StaffCity, @StaffState, @StaffZip, @StaffBirth, @StaffEmail, @Gender
+  )
+  
+  Insert Into tblSTAFF_POSITION (
+    StaffID, PositionID, BeginDate, DeptID
+  )
+  Values
+  (
+    SCOPE_IDENTITY(), @PositionID, @BeginDate, @DeptID
+  )
+Commit Transaction
+End
+
+Go
+
+Select Top 15 *
+From tblSTAFF S Join tblSTAFF_POSITION SP On S.StaffID = SP.StaffID
+Order By SP.BeginDate Desc
+
+Select * From tblDEPARTMENT
+
+Exec fretws_INSERT_NewStaffToExistingPosition
+  'Gregory', -- @StaffFName
+  'Hayward', -- @StaffLName
+  '11332 South Meadowbrook Hill Highway', -- @StaffAddress
+  'Seattle', -- @StaffCity
+  'WA', -- @StaffState
+  98105, -- @StaffZip
+  '1970-05-09', -- @StaffBirth
+  Null, -- @StaffNetID
+  Null, -- @StaffEmail
+  'M', -- @Gender
+  5, -- @PositionID
+  183, -- @DeptID
+  '2022-02-04' -- @BeginDate
 
 -- 7
-Select Top 1 D.DeptName, COUNT(PT.PositiOnTypeName) Executives
-From tblSTAFF_POSITIOn SP Join tblPOSITIOn P
-On SP.PositiOnID = P.PositiOnID
-  Join tblPOSITIOn_TYPE PT
-On P.PositiOnTypeID = PT.PositiOnTypeID
-  Join tblDEPARTMENT D
-On D.DeptID = SP.DeptID
-  Join tblSTAFF S
-On S.StaffID = SP.StaffID
-Where SP.BeginDate > '1968-06-08'
-  And SP.BeginDate < '1989-03-06'
-  And PT.PositiOnTypeName = 'Executive'
-Group By D.DeptName
-ORDER By COUNT(PT.PositiOnTypeName) DESC
 
--- 8
-Select Top 1 I.InstructorFName, I.InstructorLName, IIT.BeginDate, IIT.EndDate
-From tblInstructor I Join tblINSTRUCTOR_INSTRUCTOR_TYPE IIT
-On I.InstructorID = IIT.InstructorID
-  Join tblINSTRUCTOR_TYPE IT
-On IT.InstructorTypeID = IIT.InstructorTypeID
-Where IT.InstructorTypeName = 'Senior Lecturer'
-  And IIT.EndDate IS NULL
-ORDER By IIT.BeginDate
+Go
 
--- 9
-Select Cg.CollegeName, COUNT(Distinct C.CourseID) Courses
-From tblCLASS C Join tblQUARTER Q
-On C.QuarterID = Q.QuarterID
-  Join tblCOURSE Co
-On Co.CourseID = C.CourseID
-  Join tblDEPARTMENT D
-On D.DeptID = Co.DeptID
-  Join tblCOLLEGE Cg
-On Cg.CollegeID = D.CollegeID
-Where Q.QuarterName = 'Spring'
-  And C.YEAR = 2014
-Group By Cg.CollegeName
-Order By Courses Desc
+Create Procedure uspINSERT_NewStaffToExistingPosition
+  @StaffFName VARCHAR (60) Not Null,
+  @StaffLName VARCHAR (60) Not Null,
+  @StaffAddress VARCHAR (120) Not Null,
+  @StaffCity VARCHAR (75) Not Null,
+  @StaffState VARCHAR (25) Not Null,
+  @StaffZip VARCHAR (25) Not Null,
+  @StaffBirth DATE Not Null,
+  @StaffNetID VARCHAR (20),
+  @StaffEmail VARCHAR (80),
+  @Gender CHAR (1) Not Null,
+  @PositionID INT Not Null,
+  @DeptID INT,
+  @BeginDate DATETIME
+As
+If (
+  Exists (Select PositionID From tblPOSITION)
+  And (
+    @DeptID Is Null -- Not every Staff_Position needs a DeptID
+    Or
+    Exists (Select DeptID From tblDEPARTMENT)
+  )
+)
+Begin
+  Insert Into tblSTAFF (
+    StaffFName, StaffLName, StaffAddress, StaffCity, StaffState, StaffZip, StaffBirth, StaffEmail, Gender
+  )
+  Values
+  (
+    @StaffFName, @StaffLName, @StaffAddress, @StaffCity, @StaffState, @StaffZip, @StaffBirth, @StaffEmail, @Gender
+  )
+  
+  Insert Into tblSTAFF_POSITION (
+    StaffID, PositionID, BeginDate, DeptID
+  )
+  Values
+  (
+    SCOPE_IDENTITY(), @PositionID, @BeginDate, @DeptID
+  )
+End
 
--- 10
-Select Distinct Co.CourseName, ClT.ClassroomTypeName
-From tblCLASSROOM_TYPE ClT Join tblCLASSROOM Cl
-On Cl.ClassroomTypeID = ClT.ClassroomTypeID
-  Join tblCLASS C
-On C.ClassroomID = Cl.ClassroomID
-  Join tblCOURSE Co
-On Co.CourseID = C.CourseID
-  Join tblQUARTER Q
-On Q.QuarterID = C.QuarterID
-Where ClT.ClassroomTypeName = 'Large Lecture Hall'
-  Or ClT.ClassroomTypeName = 'Auditorium'
-  And Q.QuarterName = 'Summer'
-  And C.Year =2016
-
+Go
