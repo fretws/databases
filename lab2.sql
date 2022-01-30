@@ -13,7 +13,7 @@ Where StudentID In (
   Where Clg.CollegeName = 'Information School'
     And C.[YEAR] > 2010
   Group By S.StudentID
-  Having SUM(CL.RegistratiOnFee) > 3000
+  Having SUM(CL.RegistrationFee) > 3000
 ) And StudentID In (
   Select S.StudentID
   From tblCLASS_LIST CL
@@ -96,21 +96,7 @@ Where D.DeptAbbrev = 'ANTH'
 Group By CT.ClassroomTypeName
 Order By Count(Distinct Co.CourseID)
 
-
 -- 6
-  -- @StaffFName VARCHAR (60) Not Null,
-  -- @StaffLName VARCHAR (60) Not Null,
-  -- @StaffAddress VARCHAR (120) Not Null,
-  -- @StaffCity VARCHAR (75) Not Null,
-  -- @StaffState VARCHAR (25) Not Null,
-  -- @StaffZip VARCHAR (25) Not Null,
-  -- @StaffBirth DATE Not Null,
-  -- @StaffNetID VARCHAR (20),
-  -- @StaffEmail VARCHAR (80),
-  -- @Gender CHAR (1) Not Null,
-  -- @PositionID INT Not Null,
-  -- @DeptID INT,
-  -- @BeginDate DATETIME
 
 Go
 
@@ -166,8 +152,6 @@ Select Top 15 *
 From tblSTAFF S Join tblSTAFF_POSITION SP On S.StaffID = SP.StaffID
 Order By SP.BeginDate Desc
 
-Select * From tblDEPARTMENT
-
 Exec fretws_INSERT_NewStaffToExistingPosition
   'Gregory', -- @StaffFName
   'Hayward', -- @StaffLName
@@ -187,45 +171,71 @@ Exec fretws_INSERT_NewStaffToExistingPosition
 
 Go
 
-Create Procedure uspINSERT_NewStaffToExistingPosition
-  @StaffFName VARCHAR (60) Not Null,
-  @StaffLName VARCHAR (60) Not Null,
-  @StaffAddress VARCHAR (120) Not Null,
-  @StaffCity VARCHAR (75) Not Null,
-  @StaffState VARCHAR (25) Not Null,
-  @StaffZip VARCHAR (25) Not Null,
-  @StaffBirth DATE Not Null,
-  @StaffNetID VARCHAR (20),
-  @StaffEmail VARCHAR (80),
-  @Gender CHAR (1) Not Null,
-  @PositionID INT Not Null,
-  @DeptID INT,
-  @BeginDate DATETIME
+Alter Procedure fretws_INSERT_NewClassOfExistingCourse
+  @CourseID INT,
+  @QuarterID INT,
+  @YEAR CHAR (4),
+  @ClassroomID INT,
+  @ScheduleID INT,
+  @Section VARCHAR (4)
 As
-If (
-  Exists (Select PositionID From tblPOSITION)
-  And (
-    @DeptID Is Null -- Not every Staff_Position needs a DeptID
-    Or
-    Exists (Select DeptID From tblDEPARTMENT)
-  )
-)
-Begin
-  Insert Into tblSTAFF (
-    StaffFName, StaffLName, StaffAddress, StaffCity, StaffState, StaffZip, StaffBirth, StaffEmail, Gender
+Begin Transaction
+  Insert Into tblCLASS (
+    CourseID, QuarterID, [YEAR], ClassroomID, ScheduleID, Section
   )
   Values
   (
-    @StaffFName, @StaffLName, @StaffAddress, @StaffCity, @StaffState, @StaffZip, @StaffBirth, @StaffEmail, @Gender
+    @CourseID,
+    @QuarterID,
+    @YEAR,
+    @ClassroomID,
+    @ScheduleID,
+    @Section
   )
-  
-  Insert Into tblSTAFF_POSITION (
-    StaffID, PositionID, BeginDate, DeptID
-  )
-  Values
-  (
-    SCOPE_IDENTITY(), @PositionID, @BeginDate, @DeptID
-  )
-End
+Commit Transaction
 
 Go
+
+Select Top 10 * From tblSCHEDULE
+
+Exec fretws_INSERT_NewClassOfExistingCourse
+  1, -- @CourseID,
+  1, -- @QuarterID,
+  2022,-- @YEAR,
+  1, -- @ClassroomID,
+  4, -- @ScheduleID,
+  'A' -- @Section
+  
+Select Top 20 *
+From tblCLASS 
+Where CourseID = 1 And [YEAR] = 2022
+
+-- 8
+
+Go
+
+Alter Procedure fretws_INSERT_NewClassList
+  @ClassId INT,
+  @StudentID INT,
+  @RegistrationFee NUMERIC (10,2)
+As
+Begin Transaction
+  Insert Into tblCLASS_LIST (
+    ClassID, StudentID, RegistrationDate, RegistrationFee
+  )
+  Values (
+    @ClassID, @StudentID, GetDate(), @RegistrationFee
+  )
+Commit Transaction
+
+Go
+
+Exec fretws_INSERT_NewClassList
+  753187, -- @ClassID
+  536987, --@StudentID
+  Null -- @RegistrationFee
+
+Select Top 10 *
+From tblCLASS_LIST CL Join tblSTUDENT S On CL.StudentID = S.StudentID
+Where RegistrationFee Is Null
+Order By RegistrationDate Desc
